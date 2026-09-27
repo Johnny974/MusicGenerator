@@ -1,6 +1,6 @@
 # MusicGenerator
 
-Procedural ambience + lofi music web app. Full design: [docs/SPEC.md](docs/SPEC.md) — read it before any feature work; milestones M0–M7 define the build order.
+Procedural ambience + lofi music web app. Full design: [docs/SPEC.md](docs/SPEC.md) — read it before any feature work; milestones M0–M7 define the build order. Work is split into tickets in [docs/tickets/](docs/tickets/README.md): one ticket per session; when done, tick its criteria, set Status to `done`, update the README table.
 
 ## Layout
 

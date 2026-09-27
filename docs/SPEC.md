@@ -61,7 +61,7 @@ move independently.
 
 | Layer | Technique |
 |---|---|
-| White / pink / brown noise | Generated noise sources |
+| White / pink / brown noise | Seeded ~30 s loop buffers (per color, separate L/R), click-free seam; position at `t` = `t mod length` |
 | Rain | Filtered noise bed + spawned droplet impulses |
 | Wind | Band-passed noise with moving cutoff / resonance, gusts |
 | Fire | Brown-noise roar + crackle and pop impulses |
