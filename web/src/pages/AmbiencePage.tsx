@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Slider } from '@/components/ui/slider'
+import { LayerFader } from '@/components/LayerFader'
 import { setLayerLevel, startAudio, stopAudio } from '@/audio/engine'
-import { DEFAULT_AMBIENCE_SETTINGS, type AmbienceSettings } from '@/lib/settings'
+import type { NoiseColor } from '@/generators/noise'
+import { DEFAULT_AMBIENCE_SETTINGS, NOISE_LAYERS, type AmbienceSettings } from '@/lib/settings'
 
 export function AmbiencePage() {
   const [playing, setPlaying] = useState(false)
@@ -21,11 +22,11 @@ export function AmbiencePage() {
     }
   }
 
-  function changeBrownLevel(level: number) {
+  function changeLevel(color: NoiseColor, level: number) {
     // React state drives the slider UI; the engine gets the new level directly so
     // the sound follows the thumb without waiting for a re-render.
-    setSettings((s) => ({ ...s, brownLevel: level }))
-    setLayerLevel('brown', level)
+    setSettings((s) => ({ ...s, levels: { ...s.levels, [color]: level } }))
+    setLayerLevel(color, level)
   }
 
   return (
@@ -37,21 +38,15 @@ export function AmbiencePage() {
       <Button size="lg" onClick={toggle}>
         {playing ? 'Stop' : 'Play'}
       </Button>
-      <div
-        role="group"
-        aria-labelledby="brown-label"
-        className="flex w-full max-w-sm flex-col gap-3"
-      >
-        <span id="brown-label" className="text-sm font-medium">
-          Brown
-        </span>
-        <Slider
-          min={0}
-          max={1}
-          step={0.01}
-          value={[settings.brownLevel]}
-          onValueChange={([level]) => changeBrownLevel(level)}
-        />
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        {NOISE_LAYERS.map(({ color, label }) => (
+          <LayerFader
+            key={color}
+            label={label}
+            value={settings.levels[color]}
+            onChange={(level) => changeLevel(color, level)}
+          />
+        ))}
       </div>
     </section>
   )

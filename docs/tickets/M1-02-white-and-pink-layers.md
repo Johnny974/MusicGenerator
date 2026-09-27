@@ -4,7 +4,7 @@
 
 **Blocked by:** M1-01
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Approach
 
@@ -15,6 +15,8 @@
 - Reuse the layer channel from M1-01 — adding a layer should be data (a list of layer definitions), not copy-pasted engine code.
 - Settings model gains a level per layer. Default mix: brown up, the others at 0.
 
+**Follow-up (after listening):** equal RMS left white ~10 dB louder than brown to the ear. Layers are now normalized to perceived loudness instead — ITU-R BS.1770 K-weighted, `NOISE_TARGET_LUFS = -24` (`web/src/lib/loudness.ts`).
+
 ## Files touched
 
 - `web/src/generators/noise.ts` + `noise.test.ts`
@@ -24,11 +26,11 @@
 
 ## Acceptance criteria
 
-- [ ] Three faders labelled White / Pink / Brown; each audibly controls its own layer.
-- [ ] The three colors sound clearly different (white hiss → pink rush → brown rumble).
-- [ ] At equal fader positions the layers are roughly equally loud.
-- [ ] Layers at 0 are not playing (player stopped or never started).
-- [ ] `npm run check` and `npm run test:e2e` pass.
+- [x] Three faders labelled White / Pink / Brown; each audibly controls its own layer.
+- [x] The three colors sound clearly different (white hiss → pink rush → brown rumble).
+- [x] At equal fader positions the layers are roughly equally loud.
+- [x] Layers at 0 are not playing (player stopped or never started).
+- [x] `npm run check` and `npm run test:e2e` pass.
 
 ## Tests
 
