@@ -10,7 +10,7 @@ When a ticket is done: tick its checkboxes, set **Status** to `done`, commit.
 
 | # | Ticket | Blocked by | Status |
 |---|---|---|---|
-| 01 | [Brown noise end to end](M1-01-brown-noise-end-to-end.md) | — | ready |
+| 01 | [Brown noise end to end](M1-01-brown-noise-end-to-end.md) | — | done |
 | 02 | [White and pink layers](M1-02-white-and-pink-layers.md) | 01 | ready |
 | 03 | [Master EQ and volume](M1-03-master-eq-and-volume.md) | 01 | ready |
 | 04 | [Smooth transport](M1-04-smooth-transport.md) | 01 | ready |

@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Approach (decided — see SPEC §2 and the M1 planning discussion)
 
@@ -32,12 +32,12 @@ M1 has no seed UI yet (M2) — use a default seed constant in the settings model
 
 ## Acceptance criteria
 
-- [ ] Play produces brown noise; the level slider changes loudness live; slider at 0 is silent.
-- [ ] Same seed → bit-identical buffers; different seed → different buffers.
-- [ ] No audible click at the loop point (listen for 60+ s).
-- [ ] No `Math.random` anywhere in `src/generators` or `src/lib`.
-- [ ] `Tone.Noise` placeholder removed.
-- [ ] `npm run check` and `npm run test:e2e` pass.
+- [x] Play produces brown noise; the level slider changes loudness live; slider at 0 is silent.
+- [x] Same seed → bit-identical buffers; different seed → different buffers.
+- [x] No audible click at the loop point (listen for 60+ s).
+- [x] No `Math.random` anywhere in `src/generators` or `src/lib`.
+- [x] `Tone.Noise` placeholder removed.
+- [x] `npm run check` and `npm run test:e2e` pass.
 
 ## Tests
 
