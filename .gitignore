@@ -1,0 +1,19 @@
+# Python tools
+tools/.venv/
+__pycache__/
+*.pyc
+
+# Exports / renders
+*.wav
+*.mp4
+!web/public/**/*.wav
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json

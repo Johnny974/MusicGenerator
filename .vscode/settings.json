@@ -1,0 +1,9 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "typescript.tsdk": "web/node_modules/typescript/lib",
+  "prettier.prettierPath": "web/node_modules/prettier",
+  "files.eol": "\n",
+  "python.defaultInterpreterPath": "tools/.venv/Scripts/python.exe",
+  "vitest.rootConfig": "web/vite.config.ts"
+}
