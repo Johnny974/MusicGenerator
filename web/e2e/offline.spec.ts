@@ -7,6 +7,13 @@ import {
   type TestWindow,
 } from './helpers.ts'
 
+/** Mirrors DEFAULT_AMBIENCE_SETTINGS (src/lib/settings.ts). */
+const DEFAULT_SETTINGS: AmbienceSettings = {
+  seed: 20260927,
+  levels: { white: 0, pink: 0, brown: 0.7 },
+  master: { eq: { low: 0, mid: 0, high: 0 }, volume: 1 },
+}
+
 /** All three layers plus a non-flat EQ, so every part of the graph is exercised. */
 const MIX: AmbienceSettings = {
   seed: 12345,
@@ -57,6 +64,36 @@ for (const start of [2, 45]) {
     expect(maxError).toBeLessThan(1e-6)
   })
 }
+
+/** Every layer, every EQ band and the master at full: the loudest mix the knobs allow. */
+const LOUDEST: AmbienceSettings = {
+  seed: 12345,
+  levels: { white: 1, pink: 1, brown: 1 },
+  master: { eq: { low: 12, mid: 12, high: 12 }, volume: 1 },
+}
+
+/** The limiter's ceiling, −1 dBFS (src/lib/limiter.ts). */
+const CEILING = 10 ** (-1 / 20)
+
+test('the loudest possible mix stays under the limiter ceiling', async ({ page }) => {
+  await page.goto('/')
+  const peak = await page.evaluate(async (settings) => {
+    const { renderOfflineSamples } = (window as unknown as TestWindow).__musicgen
+    const { left, right } = await renderOfflineSamples({ settings, duration: 5 })
+    let max = 0
+    for (const channel of [left, right]) for (const x of channel) max = Math.max(max, Math.abs(x))
+    return max
+  }, LOUDEST)
+  // Without the limiter this mix peaks near 2.9 (+9 dBFS).
+  expect(peak).toBeLessThanOrEqual(CEILING)
+})
+
+test('the limiter leaves the default mix untouched', async ({ page }) => {
+  const { rms } = await renderOffline(page, { settings: DEFAULT_SETTINGS, duration: 5 })
+  // Measured before the limiter was added (M1-06).
+  const beforeLimiter = 0.048590086
+  expect(Math.abs(20 * Math.log10(rms / beforeLimiter))).toBeLessThan(0.2)
+})
 
 test('an offline render does not disturb live playback', async ({ page }) => {
   await play(page)

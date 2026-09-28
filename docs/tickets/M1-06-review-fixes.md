@@ -4,7 +4,7 @@
 
 **Blocked by:** M1-03, M1-04
 
-**Status:** todo
+**Status:** done
 
 ## Approach
 
@@ -42,13 +42,13 @@
 
 ## Acceptance criteria
 
-- [ ] All three layers at full + every EQ band at +12 dB + master at full → the offline render's peak is ≤ the ceiling (no sample ≥ 1.0).
-- [ ] Default settings: offline RMS is within ±0.2 dB of the value before the limiter was added (the limiter is transparent).
-- [ ] Play: loudness rises steadily across the whole fade; at 1 s it is still well below the level at 3 s (by ear and by test).
-- [ ] Play during a Stop fade-out, and Stop during a Play fade-in, continue from the current level with no click.
-- [ ] While audio is starting the Play button is disabled and shows "Starting…"; a double-click on Play ends up playing, with no page errors.
-- [ ] The M1-05 seek and determinism tests still pass.
-- [ ] `npm run check` and `npm run test:e2e` pass.
+- [x] All three layers at full + every EQ band at +12 dB + master at full → the offline render's peak is ≤ the ceiling (no sample ≥ 1.0).
+- [x] Default settings: offline RMS is within ±0.2 dB of the value before the limiter was added (the limiter is transparent).
+- [x] Play: loudness rises steadily across the whole fade; at 1 s it is still well below the level at 3 s (by ear and by test).
+- [x] Play during a Stop fade-out, and Stop during a Play fade-in, continue from the current level with no click.
+- [x] While audio is starting the Play button is disabled and shows "Starting…"; a double-click on Play ends up playing, with no page errors.
+- [x] The M1-05 seek and determinism tests still pass.
+- [x] `npm run check` and `npm run test:e2e` pass.
 
 ## Tests
 

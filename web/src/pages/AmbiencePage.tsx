@@ -11,20 +11,40 @@ import {
   type EqBand,
 } from '@/lib/settings'
 
+/**
+ * Where the transport is. One value instead of separate booleans, so the page
+ * can never be "starting" and "playing" at once.
+ */
+type Transport = 'stopped' | 'starting' | 'playing'
+
+const BUTTON_LABELS: Record<Transport, string> = {
+  stopped: 'Play',
+  starting: 'Starting…',
+  playing: 'Stop',
+}
+
 export function AmbiencePage() {
-  const [playing, setPlaying] = useState(false)
+  const [transport, setTransport] = useState<Transport>('stopped')
   const [settings, setSettings] = useState<AmbienceSettings>(DEFAULT_AMBIENCE_SETTINGS)
 
   // Stop sound when the user navigates away from this page.
   useEffect(() => stopAudio, [])
 
   async function toggle() {
-    if (playing) {
+    if (transport === 'playing') {
       stopAudio()
-      setPlaying(false)
-    } else {
-      await startAudio(settings)
-      setPlaying(true)
+      setTransport('stopped')
+    } else if (transport === 'stopped') {
+      // The browser may take a moment to allow audio; the button is disabled meanwhile.
+      setTransport('starting')
+      try {
+        await startAudio(settings)
+      } catch (error) {
+        // Don't leave the button stuck on "Starting…" if the browser refused audio.
+        setTransport('stopped')
+        throw error
+      }
+      setTransport('playing')
     }
   }
 
@@ -53,8 +73,8 @@ export function AmbiencePage() {
       <p className="text-muted-foreground">
         Noise, rain, wind and fire for sleep, relaxation and focus.
       </p>
-      <Button size="lg" onClick={toggle}>
-        {playing ? 'Stop' : 'Play'}
+      <Button size="lg" onClick={toggle} disabled={transport === 'starting'}>
+        {BUTTON_LABELS[transport]}
       </Button>
       <div className="flex w-full max-w-sm flex-col gap-6">
         {NOISE_LAYERS.map(({ color, label }) => (
