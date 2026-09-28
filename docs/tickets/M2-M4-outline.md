@@ -13,6 +13,8 @@ Not tickets yet. Break each milestone into detailed tickets (like `M1-*.md`) whe
 
 Note: modulation must be computable for any `t` (offline render + seek), not accumulated live. Extend the M1-05 offline test to cover it.
 
+Also (deferred from the M1 review): live playback restarts noise layers at the start of their loop (`engine.ts` `applyLevel`) instead of `t mod length`. That's inaudible for plain noise, but once modulation depends on `t`, the engine needs a timeline origin so live and offline agree at the same `t`.
+
 ## M3 — Rain / wind / fire
 
 1. **Event scheduler** — engine pulls `(t0, t1)` event windows from pure generators slightly ahead of time and schedules them; same path offline. Vitest on generator windows: determinism, and that `[t0,t1)` ∪ `[t1,t2)` = `[t0,t2)`.
