@@ -1,5 +1,7 @@
 # Tickets
 
+> **Archive.** From M2 on, tickets are [GitHub issues](https://github.com/Johnny974/MusicGenerator/issues) (see `docs/agents/issue-tracker.md`). The M1 tickets below are mirrored there as closed issues #1–#6.
+
 One file per ticket, worked in dependency order. Start each ticket in a **fresh Claude session** (`/clear`), e.g.:
 
 > Implement docs/tickets/M1-01-brown-noise-end-to-end.md. Use /tdd for the pure logic.

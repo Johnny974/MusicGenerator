@@ -1,6 +1,6 @@
 # MusicGenerator
 
-Procedural ambience + lofi music web app. Full design: [docs/SPEC.md](docs/SPEC.md) — read it before any feature work; milestones M0–M7 define the build order. Work is split into tickets in [docs/tickets/](docs/tickets/README.md): one ticket per session; when done, tick its criteria, set Status to `done`, update the README table.
+Procedural ambience + lofi music web app. Full design: [docs/SPEC.md](docs/SPEC.md) — read it before any feature work; milestones M0–M7 define the build order. M1 tickets are in [docs/tickets/](docs/tickets/README.md) (done; kept for reference). From M2 on, tickets are GitHub issues (see Agent skills below): one ticket per session; when done, tick its criteria and close the issue.
 
 ## Layout
 
@@ -29,3 +29,17 @@ Procedural ambience + lofi music web app. Full design: [docs/SPEC.md](docs/SPEC.
 - Prettier: no semicolons, single quotes, width 100.
 - Samples: CC0 only, each listed in `web/public/samples/manifest.json` with source URL + license.
 - Owner is learning React: Claude writes the code; keep it readable and explain notable React/audio patterns when handing work over.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on Johnny974/MusicGenerator, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default labels: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root (created lazily). See `docs/agents/domain.md`.
