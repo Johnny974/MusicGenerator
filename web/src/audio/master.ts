@@ -19,6 +19,9 @@ import { PARAM_RAMP_SECONDS } from '@/audio/fades'
  * fights with (or forgets) the fader position.
  *
  * The analyser sits after the fade so tests see what the listener hears.
+ *
+ * Every node is built in the Tone context passed in, never the global one, so the
+ * same bus works live and inside an offline render (src/audio/offline.ts).
  */
 
 /**
@@ -48,23 +51,36 @@ export interface MasterBus {
   dispose(): void
 }
 
-export function createMasterBus(settings: MasterSettings): MasterBus {
-  const input = new Tone.Gain(1)
+export interface MasterBusOptions {
+  /** Where to build the nodes. Default: the live context. */
+  context?: Tone.BaseContext
+  /**
+   * Live playback starts silent and waits for fadeIn. An offline render has no
+   * transport, so it starts at full level. Default: true.
+   */
+  startSilent?: boolean
+}
+
+export function createMasterBus(
+  settings: MasterSettings,
+  { context = Tone.getContext(), startSilent = true }: MasterBusOptions = {},
+): MasterBus {
+  const input = new Tone.Gain({ context, gain: 1 })
   const filters = {} as Record<EqBand, Tone.Filter>
   for (const { band } of EQ_BANDS) {
     filters[band] = new Tone.Filter({
+      context,
       ...BAND_FILTERS[band],
       gain: settings.eq[band],
       // -12 dB/oct is a single biquad; steeper rolloffs cascade several.
       rolloff: -12,
     })
   }
-  const volume = new Tone.Gain(faderToGain(settings.volume))
-  // Starts silent: nothing is heard until the first fadeIn.
-  const fade = new Tone.Gain(0)
-  const analyser = new Tone.Analyser('waveform', 1024)
+  const volume = new Tone.Gain({ context, gain: faderToGain(settings.volume) })
+  const fade = new Tone.Gain({ context, gain: startSilent ? 0 : 1 })
+  const analyser = new Tone.Analyser({ context, type: 'waveform', size: 1024 })
 
-  input.chain(filters.low, filters.mid, filters.high, volume, fade, Tone.getDestination())
+  input.chain(filters.low, filters.mid, filters.high, volume, fade, context.destination)
   fade.connect(analyser)
 
   const bus: MasterBus = {

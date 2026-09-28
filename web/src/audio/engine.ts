@@ -1,23 +1,14 @@
 import * as Tone from 'tone'
-import { generateNoiseLoop, type NoiseColor } from '@/generators/noise'
+import type { NoiseColor } from '@/generators/noise'
 import { faderToGain } from '@/lib/fader'
 import type { AmbienceSettings, EqBand } from '@/lib/settings'
-import { createMasterBus, type MasterBus } from '@/audio/master'
-import {
-  FADE_IN_SECONDS,
-  PARAM_RAMP_SECONDS,
-  SOURCE_FADE_SECONDS,
-  STOP_FADE_SECONDS,
-} from '@/audio/fades'
+import type { NoiseLayer } from '@/audio/layer'
+import { buildGraph, disposeGraph, getLayer, type Graph } from '@/audio/graph'
+import { renderOffline, renderOfflineSamples } from '@/audio/offline'
+import { FADE_IN_SECONDS, PARAM_RAMP_SECONDS, STOP_FADE_SECONDS } from '@/audio/fades'
 
 /**
- * Audio engine: turns generator output into sound.
- *
- * Signal graph (master built on first Play, layers added on demand):
- *
- *   white player (looped seeded buffer) → layer gain (fader) ─┐
- *   pink player                         → layer gain (fader) ─┼→ master bus (EQ, volume) → destination
- *   brown player                        → layer gain (fader) ─┘
+ * Audio engine: live playback of the Ambience graph (graph.ts).
  *
  * The master bus lives in master.ts so the Lofi page can reuse it.
  *
@@ -29,18 +20,6 @@ import {
  * the pending stop and fades back up from wherever the level is — the players
  * never stopped, so there is nothing to restart and nothing to click.
  */
-
-interface NoiseLayer {
-  player: Tone.Player
-  gain: Tone.Gain
-}
-
-interface Graph {
-  seed: number
-  master: MasterBus
-  /** Only layers that have been raised above 0 at least once exist here. */
-  layers: Partial<Record<NoiseColor, NoiseLayer>>
-}
 
 let graph: Graph | null = null
 /** True between Play and Stop. Fader moves only start players while playing. */
@@ -59,46 +38,14 @@ function cancelPendingStop(): void {
   pendingStop = undefined
 }
 
-function createNoiseLayer(seed: number, color: NoiseColor, master: MasterBus): NoiseLayer {
-  // Generate at the context's real rate (44.1 kHz, 48 kHz, ...) so no resampling happens.
-  const { left, right } = generateNoiseLoop({
-    seed,
-    color,
-    sampleRate: Tone.getContext().sampleRate,
-  })
-  const buffer = Tone.ToneAudioBuffer.fromArray([left, right])
-  const player = new Tone.Player({
-    url: buffer,
-    loop: true,
-    fadeIn: SOURCE_FADE_SECONDS,
-    fadeOut: SOURCE_FADE_SECONDS,
-  })
-  const gain = new Tone.Gain(0)
-  player.chain(gain, master.input)
-  return { player, gain }
-}
-
-function buildGraph(settings: AmbienceSettings): Graph {
-  return { seed: settings.seed, master: createMasterBus(settings.master), layers: {} }
-}
-
-function disposeGraph(g: Graph): void {
-  for (const layer of Object.values(g.layers)) {
-    layer.player.dispose()
-    layer.gain.dispose()
-  }
-  g.master.dispose()
-}
-
 /**
  * Bring one layer to a fader position while playing: start it if it's coming
  * in from 0, ramp it if it's already running, stop it when it reaches 0.
  */
 function applyLevel(g: Graph, color: NoiseColor, position: number): void {
   const target = faderToGain(position)
-  let layer = g.layers[color]
-
   if (position <= 0) {
+    const layer = g.layers[color]
     if (layer?.player.state === 'started') {
       layer.gain.gain.rampTo(0, PARAM_RAMP_SECONDS)
       // The player's own fadeOut smooths the stop, so this can happen right away.
@@ -107,7 +54,7 @@ function applyLevel(g: Graph, color: NoiseColor, position: number): void {
     return
   }
 
-  layer ??= g.layers[color] = createNoiseLayer(g.seed, color, g.master)
+  const layer = getLayer(g, color)
   if (layer.player.state === 'started') {
     layer.gain.gain.rampTo(target, PARAM_RAMP_SECONDS)
   } else {
@@ -115,7 +62,7 @@ function applyLevel(g: Graph, color: NoiseColor, position: number): void {
     layer.gain.gain.cancelScheduledValues(Tone.now())
     layer.gain.gain.value = target
     // Buffer position at time t is t mod loop length, so starting at offset 0 is
-    // the same as seeking to t = 0. Chunked export (M4) will pass real offsets.
+    // the same as seeking to t = 0. Offline renders pass real offsets (offline.ts).
     layer.player.start(undefined, 0)
   }
 }
@@ -192,7 +139,12 @@ export function outputRms(): number {
   return graph?.master.rms() ?? 0
 }
 
-// Test hook for Playwright: lets e2e tests check that audio is not silent.
+// Test hooks for Playwright: live output level, running layers, offline renders.
 if (import.meta.env.DEV) {
-  ;(window as unknown as { __musicgen: object }).__musicgen = { outputRms, activeLayers }
+  ;(window as unknown as { __musicgen: object }).__musicgen = {
+    outputRms,
+    activeLayers,
+    renderOffline,
+    renderOfflineSamples,
+  }
 }

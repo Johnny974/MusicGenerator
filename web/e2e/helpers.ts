@@ -1,7 +1,29 @@
 import { expect, type Page } from '@playwright/test'
 
-type TestWindow = Window & {
-  __musicgen: { outputRms: () => number; activeLayers: () => string[] }
+/** Mirrors AmbienceSettings (src/lib/settings.ts); e2e can't import app code. */
+export interface AmbienceSettings {
+  seed: number
+  levels: { white: number; pink: number; brown: number }
+  master: { eq: { low: number; mid: number; high: number }; volume: number }
+}
+
+/** Mirrors OfflineRenderOptions (src/audio/offline.ts). */
+export interface OfflineRenderOptions {
+  settings: AmbienceSettings
+  duration: number
+  start?: number
+  sampleRate?: number
+}
+
+export type TestWindow = Window & {
+  __musicgen: {
+    outputRms: () => number
+    activeLayers: () => string[]
+    renderOffline: (options: OfflineRenderOptions) => Promise<{ rms: number; checksum: string }>
+    renderOfflineSamples: (
+      options: OfflineRenderOptions,
+    ) => Promise<{ left: Float32Array; right: Float32Array; sampleRate: number }>
+  }
 }
 
 export function outputRms(page: Page) {
@@ -10,6 +32,15 @@ export function outputRms(page: Page) {
 
 export function activeLayers(page: Page) {
   return page.evaluate(() => (window as unknown as TestWindow).__musicgen.activeLayers().sort())
+}
+
+/** Offline render in the page (src/audio/offline.ts); returns RMS + checksum. */
+export async function renderOffline(page: Page, options: OfflineRenderOptions) {
+  await page.goto('/')
+  return page.evaluate(
+    (o) => (window as unknown as TestWindow).__musicgen.renderOffline(o),
+    options,
+  )
 }
 
 /** A labelled slider: each fader lives in a role="group" named by its label. */

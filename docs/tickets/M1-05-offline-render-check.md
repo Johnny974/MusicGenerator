@@ -4,7 +4,7 @@
 
 **Blocked by:** M1-02
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Approach
 
@@ -19,14 +19,15 @@
 - `web/src/audio/engine.ts` (graph builder takes a context)
 - `web/src/audio/offline.ts` (new)
 - `web/e2e/offline.spec.ts` (new)
+- Also, during implementation: `web/src/audio/graph.ts` (graph assembly shared by live and offline), `layer.ts` (one noise layer), `mixer.ts` (fixed-order summing — Chromium sums a node's inputs in hash-set order, so 3+ direct inputs aren't bit-exact), `web/src/lib/samples.ts` (checksum + RMS)
 
 ## Acceptance criteria
 
-- [ ] Offline render of 5 s with a mix of all three layers returns non-silent audio.
-- [ ] Two renders with the same settings return identical checksums; changing the seed changes the checksum.
-- [ ] Rendering `[2 s, 4 s)` equals the matching slice of a `[0 s, 4 s)` render (seekability) — sample-exact or within float epsilon.
-- [ ] Live playback still works exactly as before.
-- [ ] `npm run check` and `npm run test:e2e` pass.
+- [x] Offline render of 5 s with a mix of all three layers returns non-silent audio.
+- [x] Two renders with the same settings return identical checksums; changing the seed changes the checksum.
+- [x] Rendering `[2 s, 4 s)` equals the matching slice of a `[0 s, 4 s)` render (seekability) — sample-exact or within float epsilon.
+- [x] Live playback still works exactly as before.
+- [x] `npm run check` and `npm run test:e2e` pass.
 
 ## Tests
 

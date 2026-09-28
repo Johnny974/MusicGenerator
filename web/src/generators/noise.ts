@@ -19,8 +19,8 @@ export interface NoiseLoopOptions {
 }
 
 export interface NoiseLoop {
-  left: Float32Array
-  right: Float32Array
+  left: Float32Array<ArrayBuffer>
+  right: Float32Array<ArrayBuffer>
 }
 
 export function generateNoiseLoop({ seed, color, sampleRate }: NoiseLoopOptions): NoiseLoop {
@@ -36,7 +36,7 @@ function generateChannel(
   channelSeed: number,
   length: number,
   sampleRate: number,
-): Float32Array {
+): Float32Array<ArrayBuffer> {
   const rng = createRng(channelSeed)
   const fadeLength = Math.round(SEAM_FADE_SECONDS * sampleRate)
   // Generate a little extra past the loop end; it gets folded onto the start.
@@ -58,7 +58,11 @@ function generateChannel(
  */
 const SEAM_FADE_SECONDS = 0.08
 
-function crossfadeSeam(raw: Float32Array, length: number, fadeLength: number): Float32Array {
+function crossfadeSeam(
+  raw: Float32Array<ArrayBuffer>,
+  length: number,
+  fadeLength: number,
+): Float32Array<ArrayBuffer> {
   const out = raw.slice(0, length)
   for (let i = 0; i < fadeLength; i++) {
     // Equal-power curves keep loudness steady when mixing uncorrelated signals.
