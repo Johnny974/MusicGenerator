@@ -26,11 +26,10 @@ export interface Mixer {
 export function createMixer(
   count: number,
   output: Tone.InputNode,
-  context: Tone.BaseContext = Tone.getContext(),
+  context: Tone.BaseContext,
 ): Mixer {
   const inputs = Array.from({ length: count }, () => new Tone.Gain({ context, gain: 1 }))
-  // Tone.Gain's chain needs at least one node; with count 0 there is nothing to mix.
-  if (count > 0) inputs[0].chain(...inputs.slice(1), output)
+  inputs[0].chain(...inputs.slice(1), output)
   return {
     inputs,
     dispose() {

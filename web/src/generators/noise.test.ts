@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { measureLoudness } from '@/lib/loudness'
-import { generateNoiseLoop, NOISE_LOOP_SECONDS, NOISE_TARGET_LUFS, type NoiseColor } from './noise'
+import {
+  generateNoiseLoop,
+  NOISE_LOOP_SECONDS,
+  NOISE_TARGET_LUFS,
+  type NoiseColor,
+} from '@/generators/noise'
 
 const COLORS: NoiseColor[] = ['white', 'pink', 'brown']
 

@@ -11,6 +11,7 @@ Procedural ambience + lofi music web app. Full design: [docs/SPEC.md](docs/SPEC.
 
 - `web/src/generators/` and `web/src/lib/` are **pure**: no Tone.js, no Web Audio, no DOM. They map `(seed, settings, t0, t1)` → events.
 - Generators must be **seekable** (output at time t depends only on seed, settings, t) and **deterministic**: use `createRng` / `deriveSeed` from `src/lib/random.ts`. Never `Math.random()`.
+- Exception: noise beds (`generators/noise.ts`) return a seeded loop buffer, not events (SPEC layer table). They stay seekable because the audio layer plays buffer position `t mod length`.
 - `web/src/audio/` owns Tone.js / Web Audio and turns events into sound; the same code path serves live playback and chunked offline export.
 - `src/components/ui/` is shadcn-generated — add via `npx shadcn@latest add <name>`, don't hand-edit unless necessary.
 - Imports use the `@/` alias for `src/`.

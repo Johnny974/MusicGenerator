@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { faderToDb, faderToGain } from './fader'
+import { faderToDb, faderToGain } from '@/lib/fader'
 
 describe('faderToGain', () => {
   it('is silent at 0 and unity at 1', () => {

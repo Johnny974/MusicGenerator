@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import { faderToGain } from '@/lib/fader'
+import { rms as rmsOf } from '@/lib/samples'
 import { EQ_BANDS, type EqBand, type MasterSettings } from '@/lib/settings'
 import { PARAM_RAMP_SECONDS } from '@/audio/fades'
 
@@ -106,10 +107,7 @@ export function createMasterBus(
       fade.gain.linearRampTo(0, seconds)
     },
     rms() {
-      const samples = analyser.getValue() as Float32Array
-      let sum = 0
-      for (const s of samples) sum += s * s
-      return Math.sqrt(sum / samples.length)
+      return rmsOf([analyser.getValue() as Float32Array])
     },
     dispose() {
       for (const node of [input, ...Object.values(filters), volume, fade, analyser]) node.dispose()

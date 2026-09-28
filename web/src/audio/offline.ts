@@ -1,8 +1,7 @@
 import * as Tone from 'tone'
-import { faderToGain } from '@/lib/fader'
 import { checksum, rms } from '@/lib/samples'
 import { NOISE_LAYERS, type AmbienceSettings } from '@/lib/settings'
-import { buildGraph, disposeGraph, getLayer } from '@/audio/graph'
+import { buildGraph, disposeGraph, getLayer, startLayer } from '@/audio/graph'
 
 /**
  * Offline rendering: the same graph the live engine plays (graph.ts), built
@@ -66,12 +65,10 @@ export async function renderOfflineSamples({
     const position = settings.levels[color]
     // Same rule as live playback: a layer at 0 isn't built at all.
     if (position <= 0) continue
-    const layer = getLayer(graph, color)
-    layer.gain.gain.value = faderToGain(position)
-    const loopSamples = layer.player.buffer.length
+    const loopSamples = getLayer(graph, color).player.buffer.length
     // `%` keeps the sign in JS, so add the loop once more to wrap negatives.
     const offsetSamples = ((firstSample % loopSamples) + loopSamples) % loopSamples
-    layer.player.start(0, offsetSamples / sampleRate)
+    startLayer(graph, color, position, offsetSamples / sampleRate)
   }
 
   const rendered = await context.render()

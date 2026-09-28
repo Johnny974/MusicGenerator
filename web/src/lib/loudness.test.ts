@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { measureLoudness } from './loudness'
+import { measureLoudness } from '@/lib/loudness'
 
 const SAMPLE_RATE = 48000
 

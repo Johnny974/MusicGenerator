@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checksum, rms } from './samples'
+import { checksum, rms } from '@/lib/samples'
 
 describe('checksum', () => {
   it('is the same for equal samples', () => {

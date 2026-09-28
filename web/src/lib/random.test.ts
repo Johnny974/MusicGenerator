@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createRng, deriveSeed } from './random'
+import { createRng, deriveSeed } from '@/lib/random'
 
 const take = (seed: number, n: number) => {
   const rng = createRng(seed)

@@ -3,7 +3,7 @@ import type { NoiseColor } from '@/generators/noise'
 import { faderToGain } from '@/lib/fader'
 import type { AmbienceSettings, EqBand } from '@/lib/settings'
 import type { NoiseLayer } from '@/audio/layer'
-import { buildGraph, disposeGraph, getLayer, type Graph } from '@/audio/graph'
+import { buildGraph, disposeGraph, startLayer, type Graph } from '@/audio/graph'
 import { renderOffline, renderOfflineSamples } from '@/audio/offline'
 import { FADE_IN_SECONDS, PARAM_RAMP_SECONDS, STOP_FADE_SECONDS } from '@/audio/fades'
 
@@ -43,7 +43,6 @@ function cancelPendingStop(): void {
  * in from 0, ramp it if it's already running, stop it when it reaches 0.
  */
 function applyLevel(g: Graph, color: NoiseColor, position: number): void {
-  const target = faderToGain(position)
   if (position <= 0) {
     const layer = g.layers[color]
     if (layer?.player.state === 'started') {
@@ -54,16 +53,14 @@ function applyLevel(g: Graph, color: NoiseColor, position: number): void {
     return
   }
 
-  const layer = getLayer(g, color)
-  if (layer.player.state === 'started') {
-    layer.gain.gain.rampTo(target, PARAM_RAMP_SECONDS)
+  const layer = g.layers[color]
+  if (layer?.player.state === 'started') {
+    layer.gain.gain.rampTo(faderToGain(position), PARAM_RAMP_SECONDS)
   } else {
-    // Jump (no ramp) to the level; the player's fadeIn brings the sound in smoothly.
-    layer.gain.gain.cancelScheduledValues(Tone.now())
-    layer.gain.gain.value = target
-    // Buffer position at time t is t mod loop length, so starting at offset 0 is
-    // the same as seeking to t = 0. Offline renders pass real offsets (offline.ts).
-    layer.player.start(undefined, 0)
+    // Live playback doesn't track a timeline position yet, so a layer always
+    // (re)starts at the top of its loop. Offline renders seek with t mod loop
+    // length (offline.ts).
+    startLayer(g, color, position, 0)
   }
 }
 

@@ -1,3 +1,5 @@
+import { FNV_OFFSET_BASIS, FNV_PRIME } from '@/lib/fnv'
+
 /**
  * Seeded randomness. All generator code must use this instead of Math.random()
  * so that the same seed always produces the same audio (see docs/SPEC.md §2).
@@ -28,12 +30,12 @@ export function createRng(seed: number): Rng {
  */
 export function deriveSeed(seed: number, ...parts: (string | number)[]): number {
   // FNV-1a hash over the seed and the parts.
-  let hash = 0x811c9dc5 ^ (seed >>> 0)
+  let hash = FNV_OFFSET_BASIS ^ (seed >>> 0)
   for (const part of parts) {
     const text = `|${part}`
     for (let i = 0; i < text.length; i++) {
       hash ^= text.charCodeAt(i)
-      hash = Math.imul(hash, 0x01000193)
+      hash = Math.imul(hash, FNV_PRIME)
     }
   }
   return hash >>> 0

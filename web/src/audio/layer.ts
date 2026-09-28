@@ -2,7 +2,6 @@ import * as Tone from 'tone'
 import { generateNoiseLoop, type NoiseColor } from '@/generators/noise'
 import { NOISE_LAYERS } from '@/lib/settings'
 import { createMixer, type Mixer } from '@/audio/mixer'
-import { SOURCE_FADE_SECONDS } from '@/audio/fades'
 
 export interface NoiseLayer {
   player: Tone.Player
@@ -15,14 +14,14 @@ export interface NoiseLayerOptions {
   color: NoiseColor
   /** Where the layer's signal goes: its slot in the noise mixer. */
   output: Tone.InputNode
-  /** Where to build the nodes. Default: the live context. */
-  context?: Tone.BaseContext
+  /** Where to build the nodes: the live context or an offline one. */
+  context: Tone.BaseContext
   /**
    * The player's own fade when it starts or stops. Live playback needs it so a
    * fader crossing 0 doesn't click; an offline render starts mid-stream and
-   * must not fade. Default: SOURCE_FADE_SECONDS.
+   * must not fade (0).
    */
-  sourceFadeSeconds?: number
+  sourceFadeSeconds: number
 }
 
 /**
@@ -33,8 +32,8 @@ export function createNoiseLayer({
   seed,
   color,
   output,
-  context = Tone.getContext(),
-  sourceFadeSeconds = SOURCE_FADE_SECONDS,
+  context,
+  sourceFadeSeconds,
 }: NoiseLayerOptions): NoiseLayer {
   // Generate at the context's real rate (44.1 kHz, 48 kHz, ...) so no resampling happens.
   const { left, right } = generateNoiseLoop({ seed, color, sampleRate: context.sampleRate })
@@ -69,10 +68,7 @@ export interface NoiseMixer {
   dispose(): void
 }
 
-export function createNoiseMixer(
-  output: Tone.InputNode,
-  context: Tone.BaseContext = Tone.getContext(),
-): NoiseMixer {
+export function createNoiseMixer(output: Tone.InputNode, context: Tone.BaseContext): NoiseMixer {
   const mixer: Mixer = createMixer(NOISE_LAYERS.length, output, context)
   return {
     input: (color) => mixer.inputs[NOISE_LAYERS.findIndex((layer) => layer.color === color)],

@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { NoiseColor } from '@/generators/noise'
+import { faderToGain } from '@/lib/fader'
 import type { AmbienceSettings } from '@/lib/settings'
 import { createMasterBus, type MasterBus } from '@/audio/master'
 import { createNoiseLayer, createNoiseMixer, type NoiseLayer, type NoiseMixer } from '@/audio/layer'
@@ -64,6 +65,19 @@ export function getLayer(g: Graph, color: NoiseColor): NoiseLayer {
     context: g.context,
     sourceFadeSeconds: g.sourceFadeSeconds,
   }))
+}
+
+/**
+ * Set `color` to a fader position and start it `offset` seconds into its loop.
+ * Only for positions above 0: a layer at 0 is never started (or even built) so it
+ * costs nothing — offline.ts skips it, engine.ts stops it.
+ */
+export function startLayer(g: Graph, color: NoiseColor, position: number, offset: number): void {
+  const layer = getLayer(g, color)
+  // Jump (no ramp) to the level; live, the player's fadeIn brings the sound in smoothly.
+  layer.gain.gain.cancelScheduledValues(g.context.now())
+  layer.gain.gain.value = faderToGain(position)
+  layer.player.start(undefined, offset)
 }
 
 export function disposeGraph(g: Graph): void {

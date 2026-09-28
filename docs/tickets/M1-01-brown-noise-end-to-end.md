@@ -15,7 +15,7 @@ Noise is a **pre-computed seeded loop buffer** ("option B"):
 - The engine wraps the arrays in an AudioBuffer and plays them with a looping buffer player.
 - **Seekable by construction**: the sound at time `t` is buffer position `t mod bufferLength`. Keep this property — M4's chunked export relies on it.
 - **The loop seam must be click-free**: integrated noise does not end where it started. Crossfade the tail into the head (~50–100 ms) so the loop point is inaudible.
-- Loudness: normalize by RMS to a shared target (no clipping), so later layers are comparable at equal fader positions.
+- Loudness: normalize to a shared target (no clipping), so later layers are comparable at equal fader positions. *(Built as RMS; M1-02 switched to perceived loudness — BS.1770 LUFS, see its follow-up note.)*
 - Buffers are generated at the audio context's sample rate (pass it in; don't hardcode 44.1/48 kHz).
 
 Mixer graph: `layer player → layer gain → master bus gain → destination`, with the existing analyser tap on the master output kept working. The fader maps 0–1 to decibels (0 = silent, 1 = 0 dB, perceptually sensible curve) via a pure helper.
@@ -41,6 +41,6 @@ M1 has no seed UI yet (M2) — use a default seed constant in the settings model
 
 ## Tests
 
-- **Vitest (`noise.test.ts`)**: determinism per seed; L ≠ R; RMS near the target and peak < 1; brown spectrum is low-heavy (e.g. mean |sample-to-sample difference| much smaller than for white noise, or energy ratio of a simple low-pass vs. high-pass split); loop seam continuity — `|last − first|` is within the typical sample-to-sample step.
+- **Vitest (`noise.test.ts`)**: determinism per seed; L ≠ R; RMS near the target and peak < 1 *(now: loudness near `NOISE_TARGET_LUFS`, see M1-02)*; brown spectrum is low-heavy (e.g. mean |sample-to-sample difference| much smaller than for white noise, or energy ratio of a simple low-pass vs. high-pass split); loop seam continuity — `|last − first|` is within the typical sample-to-sample step.
 - **Vitest**: fader helper — 0 → silent (−∞ / gain 0), 1 → 0 dB, monotonic.
 - **Playwright**: existing smoke test still passes (Play → non-silent); moving the slider to 0 → `outputRms()` drops to ~0.
