@@ -1,23 +1,25 @@
 import * as Tone from 'tone'
 import { faderToGain } from '@/lib/fader'
 import { EQ_BANDS, type EqBand, type MasterSettings } from '@/lib/settings'
+import { PARAM_RAMP_SECONDS } from '@/audio/fades'
 
 /**
  * Master section: everything the whole mix passes through before the speakers.
  *
- *   input → low shelf → mid peak → high shelf → volume → destination
- *                                                  └→ analyser (tests / visualizer)
+ *   input → low shelf → mid peak → high shelf → volume → fade → destination
+ *                                                           └→ analyser (tests / visualizer)
  *
  * The EQ is three plain biquads rather than Tone.EQ3: EQ3 splits the signal
  * into bands with crossover filters and sums them back, which is not perfectly
  * flat. A shelf or peaking biquad at 0 dB is an exact pass-through, so a flat
  * EQ sounds identical to no EQ.
  *
- * The analyser sits after the volume so tests see what the listener hears.
+ * `volume` is the user's master fader; `fade` is the transport's own gain for
+ * fade-in on Play and fade-out on Stop. Keeping them separate means a fade never
+ * fights with (or forgets) the fader position.
+ *
+ * The analyser sits after the fade so tests see what the listener hears.
  */
-
-/** Short ramp so knob and fader moves never click. */
-const RAMP_SECONDS = 0.05
 
 /**
  * Shelf corner / peak centre frequencies, in Hz. The high corner sits fairly low
@@ -37,6 +39,10 @@ export interface MasterBus {
   setVolume(position: number): void
   /** Move every EQ band and the volume to `settings`. */
   apply(settings: MasterSettings): void
+  /** Ramp the whole mix from wherever it is now up to full over `seconds`. */
+  fadeIn(seconds: number): void
+  /** Ramp the whole mix from wherever it is now down to silence over `seconds`. */
+  fadeOut(seconds: number): void
   /** Root-mean-square level of the master output right now (0 = silence). */
   rms(): number
   dispose(): void
@@ -54,23 +60,34 @@ export function createMasterBus(settings: MasterSettings): MasterBus {
     })
   }
   const volume = new Tone.Gain(faderToGain(settings.volume))
+  // Starts silent: nothing is heard until the first fadeIn.
+  const fade = new Tone.Gain(0)
   const analyser = new Tone.Analyser('waveform', 1024)
 
-  input.chain(filters.low, filters.mid, filters.high, volume, Tone.getDestination())
-  volume.connect(analyser)
+  input.chain(filters.low, filters.mid, filters.high, volume, fade, Tone.getDestination())
+  fade.connect(analyser)
 
   const bus: MasterBus = {
     input,
     setEq(band, db) {
       // Linear: rampTo would pick an exponential ramp for dB, which breaks crossing 0.
-      filters[band].gain.linearRampTo(db, RAMP_SECONDS)
+      filters[band].gain.linearRampTo(db, PARAM_RAMP_SECONDS)
     },
     setVolume(position) {
-      volume.gain.rampTo(faderToGain(position), RAMP_SECONDS)
+      volume.gain.rampTo(faderToGain(position), PARAM_RAMP_SECONDS)
     },
     apply({ eq, volume: position }) {
       for (const { band } of EQ_BANDS) bus.setEq(band, eq[band])
       bus.setVolume(position)
+    },
+    // linearRampTo first holds the value the gain has right now and cancels any
+    // ramp still in progress, so a fade can reverse mid-way without a jump.
+    // Linear (not exponential) so the fade-out lands on true silence.
+    fadeIn(seconds) {
+      fade.gain.linearRampTo(1, seconds)
+    },
+    fadeOut(seconds) {
+      fade.gain.linearRampTo(0, seconds)
     },
     rms() {
       const samples = analyser.getValue() as Float32Array
@@ -79,7 +96,7 @@ export function createMasterBus(settings: MasterSettings): MasterBus {
       return Math.sqrt(sum / samples.length)
     },
     dispose() {
-      for (const node of [input, ...Object.values(filters), volume, analyser]) node.dispose()
+      for (const node of [input, ...Object.values(filters), volume, fade, analyser]) node.dispose()
     },
   }
   return bus

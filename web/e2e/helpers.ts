@@ -26,10 +26,15 @@ export async function setFader(page: Page, label: string, tenths: number) {
   await expect(handle).toHaveAttribute('aria-valuenow', String(tenths / 10))
 }
 
+/** Play fades in over 3 s (src/audio/fades.ts); wait a little longer so levels are settled. */
+export const FADE_IN_SETTLE_MS = 3300
+
+/** Open the Ambience page, press Play and wait until the fade-in has finished. */
 export async function play(page: Page) {
   await page.goto('/')
   await page.getByRole('button', { name: 'Play' }).click()
   await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible()
+  await page.waitForTimeout(FADE_IN_SETTLE_MS)
 }
 
 /**

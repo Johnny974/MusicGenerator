@@ -4,7 +4,7 @@
 
 **Blocked by:** M1-01
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Approach
 
@@ -22,12 +22,12 @@
 
 ## Acceptance criteria
 
-- [ ] Play: sound rises gradually from silence over ~3 s.
-- [ ] Stop: no click; sound gone within ~0.5 s.
-- [ ] Rapid Play/Stop/Play toggling produces no clicks, stuck audio or errors in the console.
-- [ ] Dragging a fader quickly produces no crackle.
-- [ ] Navigating to /lofi while playing → silence.
-- [ ] `npm run check` and `npm run test:e2e` pass.
+- [x] Play: sound rises gradually from silence over ~3 s.
+- [x] Stop: no click; sound gone within ~0.5 s.
+- [x] Rapid Play/Stop/Play toggling produces no clicks, stuck audio or errors in the console.
+- [x] Dragging a fader quickly produces no crackle.
+- [x] Navigating to /lofi while playing → silence.
+- [x] `npm run check` and `npm run test:e2e` pass.
 
 ## Tests
 
