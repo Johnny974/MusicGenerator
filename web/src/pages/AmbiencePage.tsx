@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { LayerFader } from '@/components/LayerFader'
-import { setLayerLevel, startAudio, stopAudio } from '@/audio/engine'
+import { LabelledSlider } from '@/components/LabelledSlider'
+import { MasterSection } from '@/components/MasterSection'
+import { setLayerLevel, setMasterEq, setMasterVolume, startAudio, stopAudio } from '@/audio/engine'
 import type { NoiseColor } from '@/generators/noise'
-import { DEFAULT_AMBIENCE_SETTINGS, NOISE_LAYERS, type AmbienceSettings } from '@/lib/settings'
+import {
+  DEFAULT_AMBIENCE_SETTINGS,
+  NOISE_LAYERS,
+  type AmbienceSettings,
+  type EqBand,
+} from '@/lib/settings'
 
 export function AmbiencePage() {
   const [playing, setPlaying] = useState(false)
@@ -29,6 +35,18 @@ export function AmbiencePage() {
     setLayerLevel(color, level)
   }
 
+  function changeEq(band: EqBand, db: number) {
+    // React state must be replaced, never mutated: each level of nesting on the
+    // path to the changed value is copied with `...`, everything else is shared.
+    setSettings((s) => ({ ...s, master: { ...s.master, eq: { ...s.master.eq, [band]: db } } }))
+    setMasterEq(band, db)
+  }
+
+  function changeVolume(volume: number) {
+    setSettings((s) => ({ ...s, master: { ...s.master, volume } }))
+    setMasterVolume(volume)
+  }
+
   return (
     <section className="flex flex-col items-center gap-6">
       <h1 className="text-3xl font-semibold">Ambience</h1>
@@ -40,7 +58,7 @@ export function AmbiencePage() {
       </Button>
       <div className="flex w-full max-w-sm flex-col gap-6">
         {NOISE_LAYERS.map(({ color, label }) => (
-          <LayerFader
+          <LabelledSlider
             key={color}
             label={label}
             value={settings.levels[color]}
@@ -48,6 +66,7 @@ export function AmbiencePage() {
           />
         ))}
       </div>
+      <MasterSection value={settings.master} onEqChange={changeEq} onVolumeChange={changeVolume} />
     </section>
   )
 }

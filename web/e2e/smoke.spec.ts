@@ -1,10 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-
-type TestWindow = Window & { __musicgen: { outputRms: () => number } }
-
-function outputRms(page: Page) {
-  return page.evaluate(() => (window as unknown as TestWindow).__musicgen.outputRms())
-}
+import { expect, test } from '@playwright/test'
+import { outputRms } from './helpers.ts'
 
 test('page loads and Play produces non-silent audio', async ({ page }) => {
   await page.goto('/')

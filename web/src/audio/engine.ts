@@ -1,7 +1,8 @@
 import * as Tone from 'tone'
 import { generateNoiseLoop, type NoiseColor } from '@/generators/noise'
 import { faderToGain } from '@/lib/fader'
-import type { AmbienceSettings } from '@/lib/settings'
+import type { AmbienceSettings, EqBand } from '@/lib/settings'
+import { createMasterBus, type MasterBus } from '@/audio/master'
 
 /**
  * Audio engine: turns generator output into sound.
@@ -9,8 +10,10 @@ import type { AmbienceSettings } from '@/lib/settings'
  * Signal graph (master built on first Play, layers added on demand):
  *
  *   white player (looped seeded buffer) → layer gain (fader) ─┐
- *   pink player                         → layer gain (fader) ─┼→ master gain → destination
- *   brown player                        → layer gain (fader) ─┘        └→ analyser (tests / visualizer)
+ *   pink player                         → layer gain (fader) ─┼→ master bus (EQ, volume) → destination
+ *   brown player                        → layer gain (fader) ─┘
+ *
+ * The master bus lives in master.ts so the Lofi page can reuse it.
  *
  * A layer whose fader is at 0 has its player stopped (or never created), so it
  * costs no CPU. Raising the fader creates/starts it; lowering to 0 stops it.
@@ -27,8 +30,7 @@ interface NoiseLayer {
 
 interface Graph {
   seed: number
-  master: Tone.Gain
-  analyser: Tone.Analyser
+  master: MasterBus
   /** Only layers that have been raised above 0 at least once exist here. */
   layers: Partial<Record<NoiseColor, NoiseLayer>>
 }
@@ -37,7 +39,7 @@ let graph: Graph | null = null
 /** True between Play and Stop. Fader moves only start players while playing. */
 let playing = false
 
-function createNoiseLayer(seed: number, color: NoiseColor, master: Tone.Gain): NoiseLayer {
+function createNoiseLayer(seed: number, color: NoiseColor, master: MasterBus): NoiseLayer {
   // Generate at the context's real rate (44.1 kHz, 48 kHz, ...) so no resampling happens.
   const { left, right } = generateNoiseLoop({
     seed,
@@ -52,16 +54,12 @@ function createNoiseLayer(seed: number, color: NoiseColor, master: Tone.Gain): N
     fadeOut: START_FADE_SECONDS,
   })
   const gain = new Tone.Gain(0)
-  player.chain(gain, master)
+  player.chain(gain, master.input)
   return { player, gain }
 }
 
-function buildGraph(seed: number): Graph {
-  const master = new Tone.Gain(1).toDestination()
-  // Tap the master output so tests (and later the visualizer) can inspect it.
-  const analyser = new Tone.Analyser('waveform', 1024)
-  master.connect(analyser)
-  return { seed, master, analyser, layers: {} }
+function buildGraph(settings: AmbienceSettings): Graph {
+  return { seed: settings.seed, master: createMasterBus(settings.master), layers: {} }
 }
 
 function disposeGraph(g: Graph): void {
@@ -69,7 +67,6 @@ function disposeGraph(g: Graph): void {
     layer.player.dispose()
     layer.gain.dispose()
   }
-  g.analyser.dispose()
   g.master.dispose()
 }
 
@@ -111,7 +108,12 @@ export async function startAudio(settings: AmbienceSettings): Promise<void> {
     disposeGraph(graph)
     graph = null
   }
-  graph ??= buildGraph(settings.seed)
+  if (graph) {
+    // Master knobs may have moved while no graph existed to hear them.
+    graph.master.apply(settings.master)
+  } else {
+    graph = buildGraph(settings)
+  }
   playing = true
 
   for (const [color, position] of Object.entries(settings.levels)) {
@@ -130,6 +132,16 @@ export function setLayerLevel(color: NoiseColor, position: number): void {
   if (graph && playing) applyLevel(graph, color, position)
 }
 
+/** Master EQ band gain in dB (±12). Applies whenever a graph exists, playing or not. */
+export function setMasterEq(band: EqBand, db: number): void {
+  graph?.master.setEq(band, db)
+}
+
+/** Master fader position in [0, 1]; 0 silences the whole mix. */
+export function setMasterVolume(position: number): void {
+  graph?.master.setVolume(position)
+}
+
 /** Colors whose players are currently running (for tests: layers at 0 must not run). */
 export function activeLayers(): NoiseColor[] {
   if (!graph) return []
@@ -140,11 +152,7 @@ export function activeLayers(): NoiseColor[] {
 
 /** Root-mean-square level of the master output right now (0 = silence). */
 export function outputRms(): number {
-  if (!graph) return 0
-  const samples = graph.analyser.getValue() as Float32Array
-  let sum = 0
-  for (const s of samples) sum += s * s
-  return Math.sqrt(sum / samples.length)
+  return graph?.master.rms() ?? 0
 }
 
 // Test hook for Playwright: lets e2e tests check that audio is not silent.

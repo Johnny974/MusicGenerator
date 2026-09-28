@@ -1,43 +1,13 @@
-import { expect, test, type Page } from '@playwright/test'
-
-type TestWindow = Window & {
-  __musicgen: { outputRms: () => number; activeLayers: () => string[] }
-}
+import { expect, test } from '@playwright/test'
+import { activeLayers, outputRms, play, setFader, slider } from './helpers.ts'
 
 const LAYERS = ['White', 'Pink', 'Brown'] as const
 
-function outputRms(page: Page) {
-  return page.evaluate(() => (window as unknown as TestWindow).__musicgen.outputRms())
-}
-
-function activeLayers(page: Page) {
-  return page.evaluate(() => (window as unknown as TestWindow).__musicgen.activeLayers().sort())
-}
-
-function fader(page: Page, label: string) {
-  return page.getByRole('group', { name: label }).getByRole('slider')
-}
-
-/** Radix sliders: Home → minimum; each PageUp adds 10 steps (0.1 here). */
-async function setFader(page: Page, label: string, tenths: number) {
-  const slider = fader(page, label)
-  await slider.focus()
-  await slider.press('Home')
-  for (let i = 0; i < tenths; i++) await slider.press('PageUp')
-  await expect(slider).toHaveAttribute('aria-valuenow', String(tenths / 10))
-}
-
-async function play(page: Page) {
-  await page.goto('/')
-  await page.getByRole('button', { name: 'Play' }).click()
-  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible()
-}
-
 test('offers White, Pink and Brown faders with only brown up by default', async ({ page }) => {
   await page.goto('/')
-  for (const label of LAYERS) await expect(fader(page, label)).toBeVisible()
-  await expect(fader(page, 'White')).toHaveAttribute('aria-valuenow', '0')
-  await expect(fader(page, 'Pink')).toHaveAttribute('aria-valuenow', '0')
+  for (const label of LAYERS) await expect(slider(page, label)).toBeVisible()
+  await expect(slider(page, 'White')).toHaveAttribute('aria-valuenow', '0')
+  await expect(slider(page, 'Pink')).toHaveAttribute('aria-valuenow', '0')
 
   await page.getByRole('button', { name: 'Play' }).click()
   // Layers at 0 never start their player.

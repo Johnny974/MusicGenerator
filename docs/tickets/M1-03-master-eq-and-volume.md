@@ -4,7 +4,7 @@
 
 **Blocked by:** M1-01 (independent of M1-02 — can run in parallel)
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Approach
 
@@ -21,10 +21,10 @@
 
 ## Acceptance criteria
 
-- [ ] Cutting High makes brown/pink/white noticeably darker; boosting Low adds rumble.
-- [ ] Master volume scales the entire mix; 0 = silent.
-- [ ] All EQ at 0 dB sounds identical to no EQ.
-- [ ] `npm run check` and `npm run test:e2e` pass.
+- [x] Cutting High makes brown/pink/white noticeably darker; boosting Low adds rumble.
+- [x] Master volume scales the entire mix; 0 = silent.
+- [x] All EQ at 0 dB sounds identical to no EQ.
+- [x] `npm run check` and `npm run test:e2e` pass.
 
 ## Tests
 
